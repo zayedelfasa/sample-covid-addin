@@ -2,7 +2,7 @@
 
 ### Use API : 
  - World Count : https://covid19.mathdro.id/api
- - Indonesia Cound : https://covid19.mathdro.id/api/countries/IDN
+ - Indonesia Count : https://covid19.mathdro.id/api/countries/IDN
 
 ### Use Library : 
  - React
@@ -14,5 +14,5 @@
  - https://docs.microsoft.com/en-us/office/dev/add-ins/excel/excel-add-ins-core-concepts
 
  Thanks!
- 
+
  *Zayed Elfasa*
