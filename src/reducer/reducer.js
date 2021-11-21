@@ -7,7 +7,7 @@ const Reducer = (state, action) => {
         case IS_LOADING:
             return { ...state, data: action.data == [] ? [] : {}, error: null, loadState: IS_LOADING};
         case IS_DONE:
-            return { ...state, data: action.data, error: null, loadState: IS_DONE };
+            return { ...state, data: action.data , error: null, loadState: IS_DONE };
         case IS_ERROR:
             return { ...state, data: [], error: action.error, loadState: IS_ERROR };
         default:

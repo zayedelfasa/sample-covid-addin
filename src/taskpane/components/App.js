@@ -1,5 +1,4 @@
 import * as React from "react";
-import PropTypes from "prop-types";
 import { DefaultButton } from "@fluentui/react";
 import Header from "./Header";
 import HeroList from "./HeroList";
@@ -7,22 +6,11 @@ import Progress from "./Progress";
 import Reducer from "../../reducer/reducer";
 import { IS_INITIALIZED, IS_LOADING, IS_DONE, IS_ERROR } from '../../reducer/status';
 
-// images references in the manifest
-/* eslint-disable no-unused-vars */
-import icon16 from "../../../assets/icon-16.png";
-import icon32 from "../../../assets/icon-32.png";
-import icon64 from "../../../assets/icon-64.png";
-import icon80 from "../../../assets/icon-80.png";
-import icon128 from "../../../assets/icon-128.png";
-/* eslint-enable no-unused-vars */
-
-/* global console, Excel, require */
-
 const App = ({ isOfficeInitialized, title }) => {
 
   const [listItems, setListItems] = React.useState([]);
-  const [stateListCovid, dispatch] = React.useReducer(Reducer, { type: IS_INITIALIZED, data: {}});
-  const [stateListIDN, dispatchIDN] = React.useReducer(Reducer, { type: IS_INITIALIZED, data: {}});
+  const [stateListCovid, dispatch] = React.useReducer(Reducer, { type: IS_INITIALIZED, data: {} });
+  const [stateListIDN, dispatchIDN] = React.useReducer(Reducer, { type: IS_INITIALIZED, data: {} });
 
   // get list
   React.useEffect(() => {
@@ -42,8 +30,19 @@ const App = ({ isOfficeInitialized, title }) => {
     ]);
   }, []);
 
-  const convertToTableExcel = async (dataWorld, dataIDN) => {
+  React.useEffect(() => {
+    if (stateListCovid.loadState == IS_DONE && stateListIDN.loadState == IS_DONE ) 
+      convertToTableExcel();
+  }, [stateListCovid.loadState, stateListIDN.loadState]);
+
+  const convertToTableExcel = async () => {
     try {
+      let dataWorld, dataIDN;
+      dataWorld = stateListCovid.data;
+      dataIDN = stateListIDN.data;
+
+      console.log(`data world ${dataWorld.confirmed.value}`);
+
       await Excel.run(async (context) => {
         let sheet = context.workbook.worksheets.getActiveWorksheet();
 
@@ -51,7 +50,7 @@ const App = ({ isOfficeInitialized, title }) => {
           ["STATE", "CONFIRMED", "RECOVERED", "DEATHS"]
         ];
 
-        let headerRange = sheet.getRange("B2:E4");
+        let headerRange = sheet.getRange("B2:E2");
         headerRange.values = header;
         headerRange.format.fill.color = "#4472C4";
         headerRange.format.font.color = "white";
@@ -61,7 +60,10 @@ const App = ({ isOfficeInitialized, title }) => {
           ["Indonesia", `${dataIDN.confirmed.value}`, `${dataIDN.recovered.value}`, `${dataIDN.deaths.value}`]
         ];
 
-        let range = sheet.getRange("B3:D4");
+        let range = sheet.getRange("B3:E4");
+        range.numberFormat=[["0"]]
+        range.format.autofitRows = true;
+        range.format.autofitColumns = true;
         range.values = dataCovid;
 
         return context.sync();
@@ -74,27 +76,32 @@ const App = ({ isOfficeInitialized, title }) => {
   const getDataCovid = async () => {
     dispatch({ type: IS_LOADING });
     dispatchIDN({ type: IS_LOADING });
-    // fetch for the world
-    await fetch("https://covid19.mathdro.id/api").then(async response => {
-      dispatch({
-        type: IS_DONE,
-        data: response.json()
-      });
-    })
-      .catch(error => {
+
+    await fetch("https://covid19.mathdro.id/api")
+      .then(async (res) => {
+        let data = await res.json();
+        console.log(`Data Covid : ${data.confirmed.value}`);
+        dispatch({
+          type: IS_DONE,
+          data: data
+        });
+      })
+      .catch(err => {
         dispatch({
           type: IS_ERROR,
-          error: error.toString()
+          error: err
         });
       });
 
     // fetch for IDN
-    await fetch("https://covid19.mathdro.id/api/countries/IDN").then(async response => {
-      dispatchIDN({
-        type: IS_DONE,
-        data: response.json()
-      });
-    })
+    await fetch("https://covid19.mathdro.id/api/countries/IDN")
+      .then(async (res) => {
+        let data = await res.json();
+        dispatchIDN({
+          type: IS_DONE,
+          data: data
+        });
+      })
       .catch(err => {
         dispatchIDN({
           type: IS_ERROR,
@@ -113,14 +120,6 @@ const App = ({ isOfficeInitialized, title }) => {
     );
   }
 
-  function checkIsDone() {
-    return stateListCovid.type == IS_DONE && stateListIDN.type == IS_DONE;
-  }
-
-  function checkInitialized() {
-    return stateListCovid.type == IS_INITIALIZED && stateListIDN.type == IS_INITIALIZED;
-  }
-
   return (
     <div className="ms-welcome">
       <Header logo={require("./../../../assets/logo-filled.png")} title={title} message="Welcome" />
@@ -135,13 +134,9 @@ const App = ({ isOfficeInitialized, title }) => {
             <div>
               {
                 <DefaultButton className="ms-welcome__action" iconProps={{ iconName: "ChevronRight" }} onClick={getDataCovid} >
-                    Get data COVID                    
+                  Get data COVID
                 </DefaultButton>
               }
-              <div>
-                {/* {stateListCovid.data == {} ? "" : stateListCovid.data} */}
-                belum ada data
-              </div>
             </div>
         }
       </HeroList>
